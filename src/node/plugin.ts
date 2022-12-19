@@ -1,0 +1,24 @@
+import { LoadResult, PartialResolvedId, SourceDescription } from "rollup";
+import { ServerContext } from "./server";
+
+export type ServerHook = (
+  server: ServerContext
+) => (() => void) | void | Promise<(() => void) | void>;
+
+// 实现以下几个钩子
+export interface Plugin {
+  name: string;
+  // vite独有
+  configureServer?: ServerHook;
+  resolveId?: (
+    id: string,
+    importer?: string
+  ) => Promise<PartialResolvedId | null> | PartialResolvedId | null;
+  load?: (id: string) => Promise<LoadResult | null> | LoadResult | null;
+  transform?: (
+    code: string,
+    id: string
+  ) => Promise<SourceDescription | null> | SourceDescription | null;
+  // vite独有
+  transformIndexHtml?: (raw: string) => Promise<string> | string;
+}

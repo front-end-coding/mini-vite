@@ -232,27 +232,29 @@
     1. 创建 WebSocket 客户端，用于和服务端通信
     2. 在收到服务端的更新信息后，通过动态 import 拉取最新的模块内容，执行 accept 更新回调
     3. 暴露 HMR 的一些工具函数，比如 import.meta.hot 对象的实现
-
     客户端需要建立ws客户端。
+
     ```javascript
-    // 1. 创建客户端 WebSocket 实例
-    // 其中的 __HMR_PORT__ 之后会被 no-bundle 服务编译成具体的端口号
-    const socket = new WebSocket(`ws://localhost:__HMR_PORT__`, "vite-hmr");  
-    // 2. 接收服务端的更新信息
-    socket.addEventListener("message", async ({ data }) => {
-      handleMessage(JSON.parse(data)).catch(console.error);
-    });
+      // 1. 创建客户端 WebSocket 实例
+      // 其中的 __HMR_PORT__ 之后会被 no-bundle 服务编译成具体的端口号
+      const socket = new WebSocket(`ws://localhost:__HMR_PORT__`, "vite-hmr");  
+      // 2. 接收服务端的更新信息
+      socket.addEventListener("message", async ({ data }) => {
+        handleMessage(JSON.parse(data)).catch(console.error);
+      });
     ```
-    如何将降本注入到客户端？新建一个inject plugin通过`transformIndexhtml`来插入一个一个脚本`<script type="module" src="${CLIENT_PUBLIC_PATH}></script>`。
-    load时候回去读取相应目录下的文件。这样就把客户端脚本内注入到index.html。其中hmr更新函数理论上也会在客户端脚本中进行挂载。我们需要在业务源码中注入,在`importAnalysis`中进行注入，当然热更新的方法也需要再客户端脚本中添加。
+
+  如何将降本注入到客户端？新建一个inject plugin通过`transformIndexhtml`来插入一个一个脚本`<script type="module" src="${CLIENT_PUBLIC_PATH}></script>`。
+  load时候回去读取相应目录下的文件。这样就把客户端脚本内注入到index.html。其中hmr更新函数理论上也会在客户端脚本中进行挂载。我们需要在业务源码中注入,在`importAnalysis`中进行注入，当然热更新的方法也需要再客户端脚本中添加。
+
     ```javascript
-      if (!id.includes("node_modules")) {
-      // 注入 HMR 相关的工具函数
-      ms.prepend(
-        `import { createHotContext as __vite__createHotContext } from "${CLIENT_PUBLIC_PATH}";` +
-          `import.meta.hot = __vite__createHotContext(${JSON.stringify(
-            cleanUrl(curMod.url)
-          )});`
+    if (!id.includes("node_modules")) {
+    // 注入 HMR 相关的工具函数
+    ms.prepend(
+      `import { createHotContext as __vite__createHotContext } from "${CLIENT_PUBLIC_PATH}";` +
+        `import.meta.hot = __vite__createHotContext(${JSON.stringify(
+          cleanUrl(curMod.url)
+        )});`
       );
     }
     ```

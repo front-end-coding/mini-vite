@@ -112,9 +112,10 @@
       - 如果相对路径，我们会有一个入参`improter`，意为导入该模块的模块。因此通过`path.dirname(importer)`得到上级目录，拼接上id即为绝对路径。
       - 如果遇到类似`./App`不带任何后缀的文件，会尝试为该路径加上`tsx, jsx, js, ts `后缀进行寻找，找到就返回绝对路径。
 
-  2. transfrom插件实现
-    1. load的时候，通过绝对路径，利用fs读取文件内容。返回code信息。
+  2. transfrom插件实现    
+    1. load的时候，通过绝对路径，利用fs读取文件内容。返回code信息。    
     2. transform则是利用esbuild的tranform功能。
+
     ```javascript
     const { code: transformedCode, map } = await esbuild.transform(code, {
         target: "esnext",
@@ -130,9 +131,9 @@
 
   3. 当将转化后的代码直接返回给浏览器执行，是不是就可以了？答案否定的。这里我们需要新起一个`importAnalysis`插件来将路径重写。
      1. 对于第三方依赖，重写路径，因为我们已经将第三方依赖写入了`.vite`目录下。
-     2. 对于绝对路径和相对路径，需要借助之前的路径解析插件进行解析。
+     2. 对于绝对路径和相对路径，需要借助之前的路径解析插件进行解析。是对tranform之后的string code进行解析。
 
-  经过上述步骤，页面已经可以正产渲染出来了。
+  经过上述步骤，页面已经可以真正渲染出来了。
 
 5. css插件开发。
   我们需要加载css的样式，其实就是把css当做一个esm交给浏览器去去加载，transform钩子中做处理。
